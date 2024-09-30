@@ -12,6 +12,6 @@ COPY . .
 ENV CODIGO_BITRIX=${CODIGO_BITRIX}
 
 
-EXPOSE 7072
+EXPOSE 808
 
 CMD ["python", "main.py"]
