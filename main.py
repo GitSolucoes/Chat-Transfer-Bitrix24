@@ -76,4 +76,4 @@ def index():
     return "Hello, this is the application!"
 
 if __name__ == '__main__':
-    app.run(port=7072, host='0.0.0.0')
+    app.run(port=808, host='0.0.0.0')
