@@ -1,20 +1,17 @@
-# Use uma imagem base do Python
-FROM python:3.9
 
-# Define o diretório de trabalho
-WORKDIR /app
+FROM python:3
 
-# Copia o arquivo de requisitos
+WORKDIR /
+
 COPY requirements.txt .
 
-# Instala as dependências
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -r requirements.txt
 
-# Copia o código da aplicação
 COPY . .
 
-# Expõe a porta da aplicação
+ENV CODIGO_BITRIX=${CODIGO_BITRIX}
+
+
 EXPOSE 7072
 
-# Comando para rodar a aplicação (ajustado para main.py)
 CMD ["python", "main.py"]
