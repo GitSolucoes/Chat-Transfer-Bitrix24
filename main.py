@@ -2,6 +2,7 @@ import requests
 import os
 from flask import Flask, request, jsonify
 from dotenv import load_dotenv
+import time
 
 load_dotenv()
 CODIGO_BITRIX = os.getenv('CODIGO_BITRIX')
@@ -26,6 +27,7 @@ def change_the_chat_channel():
     url = f'{base_url}/imopenlines.crm.chat.getLastId?CRM.ENTITY_TYPE=CONTACT&CRM_ENTITY={CONTACT_ID}'
     
     response = requests.post(url)
+    time.sleep(2)
     
     if response.status_code == 200:
         datajson = response.json()
@@ -56,6 +58,7 @@ def change_the_chat_responsability():
     url = f'{base_url}/imopenlines.crm.chat.getLastId?CRM.ENTITY_TYPE=CONTACT&CRM_ENTITY={CONTACT_ID}'
     
     response = requests.post(url)
+    time.sleep(2)
     
     if response.status_code == 200:
         datajson = response.json()
