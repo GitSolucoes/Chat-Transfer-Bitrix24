@@ -91,10 +91,13 @@ def change_the_chat_responsability():
     else:
         return f"Failed to get chat ID: {response.text}"
 
+# ROTA PARA TRANSFERENCIA DE BATE-PAPO NA BITRIX PARA OUTRO CARD
 
 @app.route("/transfer-chat-between-deals/", methods=["POST", "GET"])
 def transfer_chat_between_deals():
+    #pegar o id do card antigo
     from_id = request.args.get("from_deal_id", "Não informado")
+    #e ir para o outro
     to_id = request.args.get("to_deal_id", "Não informado")
 
     if from_id == "Não informado":
