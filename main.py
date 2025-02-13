@@ -53,7 +53,7 @@ def change_the_chat_channel():
         else:
             return f"No responsible approved: {response2.text}"
     else:
-        return f"Failed to get chat ID: {response.text}"
+        return f"Failed to get chat ID: {response.text} - {url}"
 
 
 # NOVA ROTA PARA TRANSFERENCIA DE BATE-PAPO COM RESPONSÁVEL
