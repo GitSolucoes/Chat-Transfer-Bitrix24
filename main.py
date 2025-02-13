@@ -43,6 +43,7 @@ def change_the_chat_channel():
         id_chat = datajson["result"]
 
         url2 = f"{base_url}/imopenlines.operator.transfer?CHAT_ID={id_chat}&QUEUE_ID={QUEUE_ID}"
+        print(f"url que esta sendo postada: {url2}")
         response2 = requests.post(url2)
 
         if response2.status_code == 200:
