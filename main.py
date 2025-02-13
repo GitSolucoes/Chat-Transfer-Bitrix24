@@ -35,6 +35,8 @@ def change_the_chat_channel():
     base_url = f"https://marketingsolucoes.bitrix24.com.br/rest/35002/{CODIGO_BITRIX}"
     url = f"{base_url}/imopenlines.crm.chat.getLastId?CRM.ENTITY_TYPE=CONTACT&CRM_ENTITY={CONTACT_ID}"
 
+    print(f"URL: {url}")
+
     response = requests.post(url)
     time.sleep(2)
 
