@@ -96,6 +96,42 @@ def change_the_chat_responsability():
 
 # ROTA PARA TRANSFERENCIA DE BATE-PAPO NA BITRIX PARA OUTRO CARD
 
+@app.route("/finalize-chat/", methods=["POST"])
+def finalize_chat():
+    DEAL_ID = request.args.get("DEAL_ID")
+
+    if not DEAL_ID:
+        return jsonify({"error": "DEAL_ID must be provided in the URL parameters"}), 400
+
+    base_url = f"https://marketingsolucoes.bitrix24.com.br/rest/35002/{CODIGO_BITRIX}"
+    url_get_chat = f"{base_url}/imopenlines.crm.chat.get?CRM_ENTITY_TYPE=DEAL&CRM_ENTITY={DEAL_ID}"
+
+    response = requests.get(url_get_chat)
+    time.sleep(2)
+
+    if response.status_code == 200:
+        datajson = response.json()
+        print("Response JSON:", datajson)  
+
+       
+        if "result" in datajson and isinstance(datajson["result"], list) and len(datajson["result"]) > 0:
+            chat_id = datajson["result"][0]["CHAT_ID"]  
+
+            url_finish_chat = f"{base_url}/imopenlines.operator.another.finish?CHAT_ID={chat_id}"
+            response2 = requests.post(url_finish_chat)
+
+            if response2.status_code == 200:
+                return jsonify({"status": "success", "message": "Chat finalized successfully"})
+            else:
+                return jsonify({"error": "Failed to finalize chat", "details": response2.text}), 500
+        else:
+            return jsonify({"error": "CHAT_ID not found in response"}), 404
+    else:
+        return jsonify({"error": "Failed to get CHAT_ID", "details": response.text}), 500
+
+
+
+
 @app.route("/transfer-chat-between-deals/", methods=["POST", "GET"])
 def transfer_chat_between_deals():
     #pegar o id do card antigo
@@ -150,7 +186,6 @@ def transfer_chat_between_deals():
 @app.route("/")
 def index():
     return "Hello, this is the application!"
-
 
 if __name__ == "__main__":
     app.run(port=1470, host="0.0.0.0")
