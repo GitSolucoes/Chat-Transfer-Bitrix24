@@ -10,7 +10,6 @@ CODIGO_BITRIX = os.getenv("CODIGO_BITRIX")
 app = Flask(__name__)
 
 
-# Webhook do Bitrix para alterações no negócio
 @app.route("/deal-updated", methods=["POST"])
 def deal_updated():
     try:
