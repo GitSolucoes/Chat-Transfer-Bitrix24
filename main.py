@@ -15,6 +15,12 @@ def extrair_numero(string):
     numero = string[start_index:]
     return numero
 
+@app.route("/deal-updated", methods=["POST"])
+def deal_updated():
+    data = request.json
+    print("Webhook recebido do Bitrix:", data)
+    return jsonify({"status": "ok"}), 200
+
 
 # ROTA PARA TRANSFERENCIA DE BATE-PAPO NA BITRIX BATENDO COM RESPONSAVEL INDO PRA FILA
 @app.route("/change-the-chat-channel/", methods=["POST"])
