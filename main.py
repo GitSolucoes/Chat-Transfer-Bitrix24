@@ -14,27 +14,15 @@ app = Flask(__name__)
 @app.route("/deal-updated", methods=["POST"])
 def deal_updated():
     try:
-        content_type = request.headers.get('Content-Type')
-        print("Tipo de conteúdo recebido:", content_type)
-
-        if request.is_json:
-            data = request.get_json()
-            print("Recebido como JSON")
-        elif 'application/x-www-form-urlencoded' in content_type:
-            data = request.form.to_dict()
-            print("Recebido como x-www-form-urlencoded")
-        elif 'multipart/form-data' in content_type:
-            data = request.form.to_dict()
-            print("Recebido como multipart/form-data")
-        else:
-            data = request.data.decode('utf-8')
-            print("Recebido como texto bruto")
-
-        print("Conteúdo:", data)
-        return jsonify({"status": "ok"}), 200
+        deal_id = request.form.get('data[FIELDS][ID]')
+        if deal_id:
+            # Chamar função que trata endereço
+            process_deal_address(deal_id)  # ou usar requests para fazer chamada local à API
+            return jsonify({"status": "ok", "deal_id": deal_id}), 200
+        return jsonify({"error": "deal_id não encontrado"}), 400
     except Exception as e:
-        print("Erro ao processar webhook:", e)
         return jsonify({"error": str(e)}), 500
+
 
 
 # ROTA PARA TRANSFERENCIA DE BATE-PAPO NA BITRIX BATENDO COM RESPONSAVEL INDO PRA FILA
