@@ -10,20 +10,32 @@ CODIGO_BITRIX = os.getenv("CODIGO_BITRIX")
 app = Flask(__name__)
 
 
-def extrair_numero(string):
-    start_index = string.index("_") + 1
-    numero = string[start_index:]
-    return numero
-
 
 @app.route("/deal-updated", methods=["POST"])
 def deal_updated():
-    if request.is_json:
-        data = request.get_json()
-    else:
-        data = request.form.to_dict()
-    print("Webhook recebido do Bitrix:", data)
-    return jsonify({"status": "ok"}), 200
+    try:
+        content_type = request.headers.get('Content-Type')
+        print("Tipo de conteúdo recebido:", content_type)
+
+        if request.is_json:
+            data = request.get_json()
+            print("Recebido como JSON")
+        elif 'application/x-www-form-urlencoded' in content_type:
+            data = request.form.to_dict()
+            print("Recebido como x-www-form-urlencoded")
+        elif 'multipart/form-data' in content_type:
+            data = request.form.to_dict()
+            print("Recebido como multipart/form-data")
+        else:
+            data = request.data.decode('utf-8')
+            print("Recebido como texto bruto")
+
+        print("Conteúdo:", data)
+        return jsonify({"status": "ok"}), 200
+    except Exception as e:
+        print("Erro ao processar webhook:", e)
+        return jsonify({"error": str(e)}), 500
+
 
 # ROTA PARA TRANSFERENCIA DE BATE-PAPO NA BITRIX BATENDO COM RESPONSAVEL INDO PRA FILA
 @app.route("/change-the-chat-channel/", methods=["POST"])
