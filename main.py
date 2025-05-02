@@ -1,14 +1,14 @@
-import requests
-import os
 from flask import Flask, request, jsonify
-from dotenv import load_dotenv
+import requests
+import logging
 import time
-
-load_dotenv()
-CODIGO_BITRIX = os.getenv("CODIGO_BITRIX")
-
 app = Flask(__name__)
 
+BITRIX_WEBHOOK = "https://marketingsolucoes.bitrix24.com.br/rest/5332/8zyo7yj1ry4k59b5"
+CHAT_TRANSFER_URL = "https://grupo--solucoes-teste-tayn.rvc6im.easypanel.host/change-the-chat-channel/"  
+FIELD_RESP_ORIGINAL = "UF_CRM_1746209622228"
+
+logging.basicConfig(level=logging.INFO)
 
 def extrair_numero(string):
     start_index = string.index("_") + 1
@@ -32,7 +32,7 @@ def change_the_chat_channel():
             400,
         )
 
-    base_url = f"https://marketingsolucoes.bitrix24.com.br/rest/35002/{CODIGO_BITRIX}"
+    base_url = f"https://marketingsolucoes.bitrix24.com.br/rest/35002/8zyo7yj1ry4k59b5"
     url = f"{base_url}/imopenlines.crm.chat.getLastId?CRM.ENTITY_TYPE=CONTACT&CRM_ENTITY={CONTACT_ID}"
 
     print(f"URL: {url}")
@@ -74,7 +74,7 @@ def change_the_chat_responsability():
 
     TRANSFER_ID = extrair_numero(TRANSFER_ID)
 
-    base_url = f"https://marketingsolucoes.bitrix24.com.br/rest/35002/{CODIGO_BITRIX}"
+    base_url = f"https://marketingsolucoes.bitrix24.com.br/rest/35002/8zyo7yj1ry4k59b5"
     url = f"{base_url}/imopenlines.crm.chat.getLastId?CRM.ENTITY_TYPE=CONTACT&CRM_ENTITY={CONTACT_ID}"
 
     response = requests.post(url)
@@ -103,7 +103,7 @@ def finalize_chat():
     if not DEAL_ID:
         return jsonify({"error": "DEAL_ID must be provided in the URL parameters"}), 400
 
-    base_url = f"https://marketingsolucoes.bitrix24.com.br/rest/35002/{CODIGO_BITRIX}"
+    base_url = f"https://marketingsolucoes.bitrix24.com.br/rest/35002/8zyo7yj1ry4k59b5"
     url_get_chat = f"{base_url}/imopenlines.crm.chat.get?CRM_ENTITY_TYPE=DEAL&CRM_ENTITY={DEAL_ID}"
 
     response = requests.get(url_get_chat)
@@ -145,7 +145,7 @@ def transfer_chat_between_deals():
     if to_id == "Não informado":
         return {"status": "error", "message": "ID do deal não informado!"}, 400
 
-    base_url = f"https://marketingsolucoes.bitrix24.com.br/rest/35002/{CODIGO_BITRIX}"
+    base_url = f"https://marketingsolucoes.bitrix24.com.br/rest/35002/8zyo7yj1ry4k59b5"
 
     url_get_activity = f"{base_url}/crm.activity.list?filter[OWNER_ID]={from_id}"
 
@@ -183,9 +183,62 @@ def transfer_chat_between_deals():
     }, 500
 
 
-@app.route("/")
-def index():
-    return "Hello, this is the application!"
+@app.route('/webhook', methods=['POST'])
+def handle_webhook():
+    deal_id = request.form.get('data[FIELDS][ID]')
+
+    if not deal_id:
+        return jsonify({'status': 'erro', 'mensagem': 'ID do negócio não encontrado'}), 400
+
+    response = requests.get(f"{BITRIX_WEBHOOK}/crm.deal.get", params={'id': deal_id})
+    result = response.json().get('result', {})
+    
+    assigned_by = str(result.get('ASSIGNED_BY_ID', ''))
+    original_responsible = str(result.get(FIELD_RESP_ORIGINAL, ''))
+    contact_id = str(result.get('CONTACT_ID', ''))
+
+    if not original_responsible or original_responsible == 'None':
+        update = requests.post(f"{BITRIX_WEBHOOK}/crm.deal.update", json={
+            'id': deal_id,
+            'fields': {
+                FIELD_RESP_ORIGINAL: assigned_by
+            }
+        }).json()
+        logging.info(f"Responsável original registrado: {assigned_by}")
+        return jsonify({'status': 'atualizado', 'mensagem': 'Responsável original registrado'})
+
+    elif original_responsible != assigned_by:
+        # Atualiza campo com novo responsável
+        update = requests.post(f"{BITRIX_WEBHOOK}/crm.deal.update", json={
+            'id': deal_id,
+            'fields': {
+                FIELD_RESP_ORIGINAL: assigned_by
+            }
+        }).json()
+        logging.info(f"Responsável mudou: de {original_responsible} para {assigned_by} — Campo atualizado")
+
+      
+        transfer_url = f"{CHAT_TRANSFER_URL}?CONTACT_ID={contact_id}&TRANSFER_ID={assigned_by}"
+        try:
+            transfer_response = requests.post(
+                "https://grupo--solucoes-teste-tayn.rvc6im.easypanel.host/change-the-chat-responsible/",
+                params={"CONTACT_ID": contact_id, "TRANSFER_ID": assigned_by}
+            )
+
+
+            if transfer_response.status_code == 200:
+                logging.info(f"Transferência de chat feita com sucesso: {transfer_url}")
+            else:
+                logging.warning(f"Falha na transferência de chat: {transfer_response.status_code} — {transfer_url}")
+        except Exception as e:
+            logging.error(f"Erro ao transferir chat: {e}")
+
+        return jsonify({'status': 'mudou', 'mensagem': 'Responsável mudou, campo atualizado e chat transferido'})
+
+    else:
+        logging.info("Não mudou a responsabilidade")
+        return jsonify({'status': 'sem_mudança', 'mensagem': 'Não mudou a responsabilidade'})
+
 
 if __name__ == "__main__":
-    app.run(port=1470, host="0.0.0.0")
+    app.run(port=1400, host="0.0.0.0")
