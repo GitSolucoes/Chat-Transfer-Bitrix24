@@ -158,6 +158,9 @@ def handle_webhook():
     response = requests.get(f"{BITRIX_WEBHOOK}/crm.deal.get", params={'id': deal_id})
     result = response.json().get('result', {})
 
+    if result["CLOSED"] == "Y" :
+        return jsonify({"status": "error", "message": "Negócio esta fechado"}), 400
+
     assigned_by = str(result.get('ASSIGNED_BY_ID', ''))
     original_responsible = str(result.get(FIELD_RESP_ORIGINAL, ''))
     contact_id = str(result.get('CONTACT_ID', ''))
